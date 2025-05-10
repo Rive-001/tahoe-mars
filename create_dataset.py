@@ -66,8 +66,12 @@ import pandas as pd
 with h5py.File("data/all.h5", "r") as f:
     drugs = f["drug"][:]
 
-drugs = [d.decode('utf-8') if isinstance(d, (bytes, bytearray)) else d for d in drugs]
-
+drugs = [
+    d.decode("utf-8").strip()              # decode bytes → str, then strip
+    if isinstance(d, (bytes, bytearray)) 
+    else str(d).strip()                    # also ensure any str is stripped
+    for d in drugs
+]
 # Load ChemBERTA embeddings CSV
 df = pd.read_csv("data/ChemBert_drug_embeddings_375.csv")  # Adjust the filename as needed
 
@@ -95,5 +99,10 @@ print("Sets equal? →", set_hdf5 == set_csv)
 print("\nIn CSV but not in HDF5:", set_csv - set_hdf5)
 print("\nIn HDF5 but not in CSV:", set_hdf5 - set_csv)
 
+drug_embeddings = []
 
-
+for drug in drugs:
+	try:
+		drug_embeddings.append(drug2emb[drug])
+	except:
+		drug_embeddings.append(np.zeros[784])

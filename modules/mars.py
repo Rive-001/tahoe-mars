@@ -48,7 +48,7 @@ class Mars(L.LightningModule):
             if m.bias is not None:
                 nn.init.zeros_(m.bias)
 
-    def forward(self, cell_id, cell_name, cell_repr, smile_repr, dosage):
+    def forward(self, cell_id, cell_name, cell_repr, drug_name, smile_repr, dosage):
 
         cell_embed = self.cell_projection(cell_repr)
         smiles_embed = self.smiles_projection(smile_repr)

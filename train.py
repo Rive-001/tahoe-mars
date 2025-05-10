@@ -41,7 +41,7 @@ criterion = CRITERION_DICT[args.criterion]
 
 # Load Model
 mars = Mars(
-    # cell_embedding_dim=1024,
+    cell_embedding_dim=1280,
     # smiles_embedding_dim=1024,
     backbone_embedding_dim=512,
     adaptor=adaptor,
