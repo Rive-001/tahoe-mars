@@ -48,10 +48,10 @@ class Mars(L.LightningModule):
             if m.bias is not None:
                 nn.init.zeros_(m.bias)
 
-    def forward(self, cell_repr, smiles_repr):
+    def forward(self, cell_id, cell_name, cell_repr, smile_repr, dosage):
 
         cell_embed = self.cell_projection(cell_repr)
-        smiles_embed = self.smiles_projection(smiles_repr)
+        smiles_embed = self.smiles_projection(smile_repr)
 
         concat_embed = self.concat([cell_embed, smiles_embed])
         backbone_embed = self.backbone(concat_embed)

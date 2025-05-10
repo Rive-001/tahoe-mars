@@ -66,15 +66,13 @@ import pandas as pd
 with h5py.File("data/all.h5", "r") as f:
     drugs = f["drug"][:]
 
-print(drugs.shape)
-
-
+drugs = [d.decode('utf-8') if isinstance(d, (bytes, bytearray)) else d for d in drugs]
 
 # Load ChemBERTA embeddings CSV
 df = pd.read_csv("data/ChemBert_drug_embeddings_375.csv")  # Adjust the filename as needed
 
 # Display available columns
-print("📄 Columns in CSV:", df.columns.tolist())
+print("Columns in CSV:", df.columns.tolist())
 
 # Extract relevant columns
 drug_names = df["drug"].to_numpy()
@@ -82,8 +80,20 @@ smiles = df["canonical_smiles"].to_numpy()
 
 drug2emb = dict(zip(drug_names, smiles))
 
-print(drug2emb.keys())
-print(np.unique(drugs))
+# 2. Get the unique set of drug names from HDF5
+set_hdf5 = set(np.unique(drugs))
+
+# 3. Get the set of drug names in your embedding dict
+set_csv = set(drug2emb.keys())
+
+# 4. Compare!
+print(f"# unique in HDF5:        {len(set_hdf5)}")
+print(f"# in embedding dict:    {len(set_csv)}")
+print("Sets equal? →", set_hdf5 == set_csv)
+
+# 5. If they’re not equal, find the differences:
+print("\nIn CSV but not in HDF5:", set_csv - set_hdf5)
+print("\nIn HDF5 but not in CSV:", set_hdf5 - set_csv)
 
 
 
