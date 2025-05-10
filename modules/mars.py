@@ -1,12 +1,15 @@
 from torch import nn
 import torch
-import lightning as L
+import pytorch_lightning as L
+from torchmetrics import MeanSquaredError
 
 from modules import ConcatEmbeddings, EmbeddingProjection, Backbone
+from utils import _init_weights
 
 class Mars(L.LightningModule):
 
     def __init__(self, cell_embedding_dim, smiles_embedding_dim, backbone_embedding_dim, adaptor, criterion, 
+        training=True,
         lr: float = 1e-3,
         weight_decay: float = 1e-5,
         max_epochs: int = 100):
@@ -14,6 +17,7 @@ class Mars(L.LightningModule):
         super().__init__()
 
         self.save_hyperparameters()
+        self.training = training
 
         self.cell_embedding_dim = cell_embedding_dim
         self.smiles_embedding_dim = smiles_embedding_dim
@@ -30,9 +34,13 @@ class Mars(L.LightningModule):
         self.concat = ConcatEmbeddings(self.concat_embedding_dim)
         self.backbone = Backbone(self.backbone_embedding_dim)
 
+        if self.training:
+            self.apply(_init_weights)
+
         self.adaptor = adaptor
 
-        self.apply(self._init_weights)
+        self.train_mse = MeanSquaredError()
+        self.val_mse   = MeanSquaredError()
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -59,25 +67,30 @@ class Mars(L.LightningModule):
         # 6. log to TensorBoard
         self.log("train/loss", loss, on_step=True, on_epoch=True)
         return loss
+    
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self(x)
+        loss = self.criterion(logits, y)
+        mse  = self.val_mse(logits, y.float())
+
+        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/mse",  mse,  on_step=False, on_epoch=True, prog_bar=True)
+
+    def on_train_epoch_end(self):
+        self.train_mse.reset()
+
+    def on_validation_epoch_end(self):
+        self.val_mse.reset()
 
     def configure_optimizers(self):
-        # 5. optimizer hyperparameters
-        opt = torch.optim.AdamW(
-            self.parameters(),
-            lr=self.hparams.lr,
-            weight_decay=self.hparams.weight_decay,
-        )
-        # learning rate scheduler
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            opt,
-            T_max=self.hparams.max_epochs,
-            eta_min=1e-6
-        )
+        opt = torch.optim.AdamW(self.parameters(), lr=self.hparams.lr, weight_decay=self.hparams.weight_decay)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=self.hparams.max_epochs, eta_min=1e-6)
         return {
             "optimizer": opt,
             "lr_scheduler": {
                 "scheduler": scheduler,
                 "interval": "epoch",
-                "monitor": "train/loss",
+                "monitor": "val/loss",
             },
         }
