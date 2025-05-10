@@ -8,6 +8,7 @@ from utils import _init_weights
 
 import argparse
 parser = argparse.ArgumentParser(description='Train MARS')
+parser.add_argument('--name', type=str, default='', help='name of the experiment')
 parser.add_argument('--train-data', type=str, default='data/train.h5', help='path to training data')
 parser.add_argument('--val-data', type=str, default='data/val.h5', help='path to validation data')
 parser.add_argument('--batch-size', type=int, default=32, help='batch size for training')
@@ -54,13 +55,19 @@ mars = Mars(
     criterion=criterion,
 )
 
-logger = TensorBoardLogger(save_dir="tb_logs", name="resnet50_adaptor")
+logger = TensorBoardLogger(save_dir="training_logs", name=f'mars_{args.name}')
+
+n_gpus = torch.cuda.device_count()
 
 trainer = L.Trainer(
     max_epochs=20,
     gpus=1 if torch.cuda.is_available() else 0,
     logger=logger,
     progress_bar_refresh_rate=20,
+    accelerator="gpu" if n_gpus > 0 else "cpu",
+    devices=n_gpus if n_gpus > 0 else None,
+    strategy="ddp" if n_gpus > 1 else None,
+    precision=16,
 )
 model = Mars()
 trainer.fit(model, train_dataloader, val_dataloader)
