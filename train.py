@@ -1,6 +1,7 @@
 import torch
 from pytorch_lightning.loggers import TensorBoardLogger
 import pytorch_lightning as L
+from torchmetrics import MeanSquaredError
 from modules import Mars
 from utils import _init_weights
 
@@ -23,7 +24,9 @@ adaptor.apply_weights(_init_weights)
 
 
 # Load Criterion
-# CRITERION_DICT = {}
+CRITERION_DICT = {
+    'mse': MeanSquaredError()
+}
 criterion = CRITERION_DICT[args.criterion]
 
 
