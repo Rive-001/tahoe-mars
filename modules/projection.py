@@ -4,6 +4,8 @@ class EmbeddingProjection(nn.Module):
 
     def __init__(self, embedding_dim, output_dim=256):
 
+        super().__init__()
+
         self.embedding_dim = embedding_dim
         self.output_dim = output_dim
 
