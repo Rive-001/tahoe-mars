@@ -46,6 +46,7 @@ criterion = CRITERION_DICT[args.criterion]
 mars = Mars(
     cell_embedding_dim=1280,
     # smiles_embedding_dim=1024,
+    # dosage_embedding=128,
     backbone_embedding_dim=512,
     adaptor=adaptor,
     training=True,

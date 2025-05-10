@@ -8,7 +8,7 @@ from utils import _init_weights
 
 class Mars(L.LightningModule):
 
-    def __init__(self, cell_embedding_dim, smiles_embedding_dim, backbone_embedding_dim, adaptor, criterion, 
+    def __init__(self, cell_embedding_dim, smiles_embedding_dim, dosage_embedding, backbone_embedding_dim, adaptor, criterion, 
         training=True,
         lr: float = 1e-3,
         weight_decay: float = 1e-5,
@@ -21,7 +21,8 @@ class Mars(L.LightningModule):
 
         self.cell_embedding_dim = cell_embedding_dim
         self.smiles_embedding_dim = smiles_embedding_dim
-        self.concat_embedding_dim = self.cell_embedding_dim + self.smiles_embedding_dim
+        self.dosage_embedding = dosage_embedding
+        self.concat_embedding_dim = self.cell_embedding_dim + self.smiles_embedding_dim + self.dosage_embedding
         self.backbone_embedding_dim = backbone_embedding_dim
         self.output_dimension = self.backbone_embedding_dim // 2
 
@@ -29,6 +30,7 @@ class Mars(L.LightningModule):
 
         self.cell_projection = EmbeddingProjection(self.cell_embedding_dim)
         self.smiles_projection = EmbeddingProjection(self.smiles_embedding_dim)
+        self.dosage_projection = nn.Embedding(4, self.dosage_embedding)
         # self.mutaion_projection = Projection(self.mutation_embedding_dim)
         
         self.concat = ConcatEmbeddings(self.concat_embedding_dim)
@@ -52,8 +54,9 @@ class Mars(L.LightningModule):
 
         cell_embed = self.cell_projection(cell_repr)
         smiles_embed = self.smiles_projection(smile_repr)
+        dosage_embed = self.dosage_projection(dosage)
 
-        concat_embed = self.concat([cell_embed, smiles_embed])
+        concat_embed = self.concat([cell_embed, smiles_embed, dosage_embed])
         backbone_embed = self.backbone(concat_embed)
 
         output = self.adaptor(backbone_embed)
@@ -64,7 +67,6 @@ class Mars(L.LightningModule):
         x, y = batch
         logits = self(x)
         loss = self.criterion(logits, y)
-        # 6. log to TensorBoard
         self.log("train/loss", loss, on_step=True, on_epoch=True)
         return loss
     
