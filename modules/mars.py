@@ -30,7 +30,7 @@ class Mars(L.LightningModule):
 
         self.cell_projection = EmbeddingProjection(self.cell_embedding_dim)
         self.smiles_projection = EmbeddingProjection(self.smiles_embedding_dim)
-        self.dosage_projection = nn.Embedding(4, self.dosage_embedding)
+        self.dosage_projection = nn.Embedding(3, self.dosage_embedding)
         # self.mutaion_projection = Projection(self.mutation_embedding_dim)
         
         self.concat = ConcatEmbeddings(self.concat_embedding_dim)
@@ -50,7 +50,7 @@ class Mars(L.LightningModule):
             if m.bias is not None:
                 nn.init.zeros_(m.bias)
 
-    def forward(self, cell_id, cell_name, cell_repr, drug_name, smile_repr, dosage):
+    def forward(self, cell_repr, smile_repr, dosage):
 
         cell_embed = self.cell_projection(cell_repr)
         smiles_embed = self.smiles_projection(smile_repr)

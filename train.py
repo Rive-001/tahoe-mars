@@ -2,6 +2,7 @@ import torch
 from pytorch_lightning.loggers import TensorBoardLogger
 import pytorch_lightning as L
 from torchmetrics import MeanSquaredError
+from pytorch_lightning.callbacks import ModelCheckpoint
 from modules import Mars, MarsDataset, GeneSetAdaptor
 from torch.utils.data import DataLoader
 from utils import _init_weights
@@ -45,8 +46,8 @@ criterion = CRITERION_DICT[args.criterion]
 # Load Model
 mars = Mars(
     cell_embedding_dim=1280,
-    # smiles_embedding_dim=1024,
-    # dosage_embedding=128,
+    smiles_embedding_dim=784,
+    dosage_embedding=64,
     backbone_embedding_dim=512,
     adaptor=adaptor,
     training=True,
@@ -60,6 +61,13 @@ logger = TensorBoardLogger(save_dir="training_logs", name=f'mars_{args.name}')
 
 n_gpus = torch.cuda.device_count()
 
+checkpoint_callback = ModelCheckpoint(
+        dirpath="checkpoints/",
+        filename=f"mars_{args.name}" + "-epoch{epoch:02d}",
+        save_top_k=-1,              # keep all checkpoints
+        every_n_epochs=10,          # interval in epochs
+    )
+
 trainer = L.Trainer(
     max_epochs=20,
     gpus=1 if torch.cuda.is_available() else 0,
@@ -69,6 +77,7 @@ trainer = L.Trainer(
     devices=n_gpus if n_gpus > 0 else None,
     strategy="ddp" if n_gpus > 1 else None,
     precision=16,
+    callbacks=[checkpoint_callback],
 )
 model = Mars()
 trainer.fit(model, train_dataloader, val_dataloader)
