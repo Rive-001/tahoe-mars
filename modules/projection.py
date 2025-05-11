@@ -24,3 +24,4 @@ class EmbeddingProjection(nn.Module):
     def forward(self, x):
 
         x = self.downsampling(x) + self.projection(x)
+        return x

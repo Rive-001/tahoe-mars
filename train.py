@@ -29,7 +29,7 @@ val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=Fal
 
 # Load Adaptor
 ADAPTOR_DICT = {
-    'gene_set': GeneSetAdaptor(),
+    'gene_set': GeneSetAdaptor(256, 7467),
 }
 
 adaptor = ADAPTOR_DICT[args.adaptor]
@@ -64,8 +64,8 @@ n_gpus = torch.cuda.device_count()
 checkpoint_callback = ModelCheckpoint(
         dirpath="checkpoints/",
         filename=f"mars_{args.name}" + "-epoch{epoch:02d}",
-        save_top_k=-1,              # keep all checkpoints
-        every_n_epochs=10,          # interval in epochs
+        save_top_k=-1,              
+        every_n_epochs=10,          
     )
 
 trainer = L.Trainer(
